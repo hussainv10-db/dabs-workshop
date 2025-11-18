@@ -34,6 +34,8 @@ Repository Layout
 
 Databricks Bundle Overview (Ops Domain Example - all domains mirror this)
 
+NOTE: Bundles are defined at the domain level, eg. ops, finance are their own bundles within the same repo
+
 The Ops bundle (.github/domains/ops/databricks.yml) defines how jobs, pipelines, and resources are deployed to Databricks across environments.
 
 Key properties
