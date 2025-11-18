@@ -1,0 +1,106 @@
+# =============================
+# Databricks Bundle Template
+# For domain teams (finance, precon, ops)
+# =============================
+
+bundle:
+  # Use a stable, domain-oriented name (not a person’s name)
+  # Examples: finance-bundle, precon-bundle, ops-bundle
+  name: finance-bundle
+
+# Default workspace root path:
+# - Dev: user-scoped (fine for iteration)
+# - Stg/Prod: overridden below to a shared path so any authorized owner can deploy safely
+workspace:
+  root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+
+# Pick up modular resources from standard folders
+include:
+  - jobs/*.yml
+  - resources/*.yml
+  - pipelines/**/*.yml
+  - notebooks/*.yml
+  - utils/*.yml
+  - views/orm/*.yml
+  - overrides/${bundle.target}/*.yml
+
+# -----------------------------
+# Shared variables (reference in your YAMLs as ${var.<name>})
+# -----------------------------
+variables:
+  # Usually keep this as the bundle target
+  env:
+    default: ${bundle.target}
+
+  warehouse_id:
+    default: 8baced1ff014912d
+
+  # Set to your team’s default timezone
+  timezone:
+    default: America/Chicago
+
+  # Secret scope to read keys from (per domain/team)
+  # Example: tcco-secrets-finance, tcco-secrets-precon
+  secret_scope:
+    default: <replace-with-secret-scope>
+
+  # Team alerting email (build/job/pipeline failures)
+  alert_email:
+    default: <team-or-oncall@tcco.com>
+
+  # Unity Catalog selection per environment
+  # Results in: empbi_dev, empbi_stg, empbi_prod
+  catalog:
+    default: empbi_${bundle.target}
+
+  # If notebooks are synced to workspace, this is a convenient base
+  code_root_folder:
+    # /Workspace/Users/hussain.vahanvaty@databricks.com/Accounts/FY26/Turner/dabs-workshop/domains/ops/notebooks/(Clone) notebook1
+    default: ${workspace.root_path}/files
+
+  # Volume path used by pipelines/jobs. Keep prod-only if you share a single source of truth,
+  # or make it env-specific if each env has its own volume.
+  # Example (single prod source of truth):
+  read_volume_uri:
+    default: /Volumes/empbi_prod/<volume-collection>/<volume-name>
+
+  # Default job behavior & scheduling helpers
+  job_pause_status:
+    default: PAUSED            # overridden to UNPAUSED in prod below
+  job_default_cron:
+    default: 0 0 5 ? * MON-FRI # 5:00 AM weekdays (Quartz cron)
+  job_default_timezone:
+    default: ${var.timezone}
+
+# -----------------------------
+# Targets (environment config)
+# -----------------------------
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
+      # dev keeps the user-scoped root_path (defined above)
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      job_pause_status: UNPAUSED
+      warehouse_id: 8baced1ff014912d
+
+  stg:
+    workspace:
+      host: https://<your-stg-workspace>
+      # Shared path so any authorized owner can deploy without duplicates
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/stg
+    variables:
+      job_pause_status: PAUSED
+
+  prod:
+    mode: production
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
+      # Shared path so any authorized owner can deploy without duplicates
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/prod
+    variables:
+      job_pause_status: UNPAUSED
+      warehouse_id: 4b9b953939869799

@@ -1,0 +1,60 @@
+Databricks based development flow: 
+- This assumes a single bundle per domain whose databricks.yml file has already been created
+- This assumes all development is done in the Databricks UI
+- Bundle configuration is being done in the UI. This is done by the developer to the dev environment only, with help from the DevOps/central Data Engineering team
+
+
+1. Clone repo to git folder in Databricks user workspace
+2. Create and checkout branch from main: feature1
+    - Ensure the git credentials are correctly configured
+3. Build notebooks, python scripts and SQL queries inside your user folder within the repo
+    - This can also include SDP Pipelines, Dashboards, ML Models and other asset classes supported by DABs
+    - Test these out for logical correctness. Once run successfully, promote these to the domains/ops/notebooks folder
+    - Use template notebooks, sql queries etc. to build upon
+4. Build Databricks job in the UI that ties together all 3 assets created above. Ensure tasks reference assets in the domains/ops folder for the correct asset type (eg. notebooks, views etc.)
+    - Scripts can be parameterized for job/task level parameters to be passed to them
+    - Note in this example we are using serverless compute
+    - In the case of classic compute, cluster names defined in job specs would have to be parameterized, or kept identical across environments
+    - When saving SQL query as files, check the extension. It has to be .sql. The new editor renders it as .dbquery.ipynb by default
+    - When creating a SQL job task, when using a SQL query as source it pulls via the query ID and not the query file in the repo. This is not ideal for CICD
+5. Copy the job YAML definition and paste it into a .job.yml file under the domains/jobs folder
+    - Make sure to parameterize the relevant objects in the YAML definition
+    - Ensure that notebook paths have the .ipynb or .py extension (this is not added by default and throws an error message as all files are required to have their corresponding extenstions)
+    - Make sure job definitions use RELATIVE PATHS
+    - The "Bundle Resources" tab of the bundle explorer should populate. This means bundle validation was successfully
+    - Deployments done from the workspace can only be done to the same workspace
+
+
+
+
+
+VSCode based development flow:
+- This assumes a single bundle per domain whose databricks.yml file has already been created
+- This assumes all development is done in VSCode as the IDE leveraging the Databricks VSCode extension which has been installed and configured
+- Bundle configuration and deployment is done in the IDE by the DevOps team
+
+1. Clone repo to local git folder opened with VSCode
+2. Create and checkout branch from main: feature2
+3. Configure the Databricks VSCode extension to have auth profiles to dev and prod environments. Use OAuth or PATs. Check the .databrickscfg file to see both profiles
+4. Build notebooks, python scripts and SQL queries in VSCode within the repo. 
+    - Use the VSCode extension to run scripts locally as well as on serverless for the cluster via Databricks connect or as a workflow
+    - For local execution, ensure python env is created with databricks-connect installed as prompted in the UI
+5. Build job in the UI or in VSCode. Building in the UI and exporting the YAML is the easiest
+    - Ensure that notebook paths have the .ipynb or .py extension (this is not added by default and throws an error message as all files are required to have their corresponding extenstions)
+    - Make sure job definitions use RELATIVE PATHS
+    - The "Bundle Resources" tab of the bundle explorer should populate. This means bundle validation was successfully
+    - Deployments done from VSCode can be done to both environments using the appropriate auth profiles
+
+
+NOTES: In both cases, the warehouse_id variable was unable to be parameterized when inside a job task. Need to figure this out
+
+
+
+
+
+
+
+
+
+
+
