@@ -1,0 +1,33 @@
+# The code below will be exported from the job definition without parameterization eg. /Workspace/Users/hussain.vahanvaty@databricks.com/Accounts/FY26/Turner/dabs-workshop/domains/ops
+# Ensure that the relevant resources (notebook_path, warehouse_id) etc. are parameterized for each environment
+resources:
+  jobs:
+    hv_dabs_workshop_job1:
+      name: hv-dabs-workshop-job1
+      description: Basic job tying together a notebook, python script and SQL query
+      tasks:
+        - task_key: notebook1
+          notebook_task:
+            notebook_path: "../notebooks/(Clone) notebook1.ipynb"
+            source: WORKSPACE
+        - task_key: python1
+          depends_on:
+            - task_key: notebook1
+          spark_python_task:
+            python_file: "../utils/(Clone) python1.py"
+          environment_key: Default
+        - task_key: sql1
+          depends_on:
+            - task_key: python1
+          sql_task:
+            file:
+              path: "../views/orm/sql3.sql"
+              source: WORKSPACE
+            warehouse_id: 4b9b953939869799
+      queue:
+        enabled: true
+      environments:
+        - environment_key: Default
+          spec:
+            environment_version: "4"
+      performance_target: PERFORMANCE_OPTIMIZED
